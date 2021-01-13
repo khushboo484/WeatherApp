@@ -1,41 +1,32 @@
-/*
- * Copyright (C) 2016 The Android Open Source Project
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *      http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+
 package com.example.android.sunshine;
 
 import android.content.Context;
+import android.content.Intent;
+import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.ProgressBar;
 import android.widget.TextView;
-import android.widget.Toast;
 
+import com.example.android.sunshine.ForecastAdapter.ForecastAdapterOnClickHandler;
 import com.example.android.sunshine.data.SunshinePreferences;
 import com.example.android.sunshine.utilities.NetworkUtils;
 import com.example.android.sunshine.utilities.OpenWeatherJsonUtils;
 
 import java.net.URL;
 
-public class MainActivity extends AppCompatActivity implements ForecastAdapter.ForecastAdapterOnClickHandler {
+public class MainActivity extends AppCompatActivity implements ForecastAdapterOnClickHandler {
+
+    private static final String TAG = MainActivity.class.getSimpleName();
 
     private RecyclerView mRecyclerView;
     private ForecastAdapter mForecastAdapter;
@@ -108,6 +99,21 @@ public class MainActivity extends AppCompatActivity implements ForecastAdapter.F
     }
 
     /**
+     * This method is overridden by our MainActivity class in order to handle RecyclerView item
+     * clicks.
+     *
+     * @param weatherForDay The weather for the day that was clicked
+     */
+    @Override
+    public void onClick(String weatherForDay) {
+        Context context = this;
+        Class destinationClass = DetailActivity.class;
+        Intent intentToStartDetailActivity = new Intent(context, destinationClass);
+        intentToStartDetailActivity.putExtra(Intent.EXTRA_TEXT, weatherForDay);
+        startActivity(intentToStartDetailActivity);
+    }
+
+    /**
      * This method will make the View for the weather data visible and
      * hide the error message.
      * <p>
@@ -133,13 +139,6 @@ public class MainActivity extends AppCompatActivity implements ForecastAdapter.F
         mRecyclerView.setVisibility(View.INVISIBLE);
         /* Then, show the error */
         mErrorMessageDisplay.setVisibility(View.VISIBLE);
-    }
-
-    @Override
-    public void onClick(String str) {
-        Context context = this;
-        Toast.makeText(context, str, Toast.LENGTH_SHORT).show();
-
     }
 
     public class FetchWeatherTask extends AsyncTask<String, Void, String[]> {
@@ -188,6 +187,20 @@ public class MainActivity extends AppCompatActivity implements ForecastAdapter.F
         }
     }
 
+    private void openLocationMap() {
+        String address = "1600 Ampitheatre Parkway, CA";
+        Uri geoLocation = Uri.parse("geo:0,0?q=" + address);
+
+        Intent intent = new Intent(Intent.ACTION_VIEW);
+        intent.setData(geoLocation);
+
+        if(intent.resolveActivity(getPackageManager()) != null) {
+            startActivity(intent);
+        } else {
+            Log.d(TAG, "Couldn't call" +  geoLocation.toString()+", no receiving apps installed!");
+        }
+    }
+
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         /* Use AppCompatActivity's method getMenuInflater to get a handle on the menu inflater */
@@ -205,6 +218,10 @@ public class MainActivity extends AppCompatActivity implements ForecastAdapter.F
         if (id == R.id.action_refresh) {
             mForecastAdapter.setWeatherData(null);
             loadWeatherData();
+            return true;
+        }
+        if(id == R.id.action_map) {
+            openLocationMap();
             return true;
         }
 
